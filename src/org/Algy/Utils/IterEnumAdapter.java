@@ -1,4 +1,4 @@
-package org.Algy.jar;
+package org.Algy.Utils;
 
 import java.util.Enumeration;
 import java.util.Iterator;

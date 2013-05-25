@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.Algy.Utils.IterEnumAdapter;
+
 public class JarContainer {
 	protected JarFile jar;
 	public JarContainer(JarFile jar)
