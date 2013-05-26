@@ -6,13 +6,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.Algy.Utils.IterEnumAdapter;
 
 public class JarContainer {
-	protected JarFile jar;
-	public JarContainer(JarFile jar)
+	protected ZipFile jar;
+	public JarContainer(ZipFile jar)
 	{
 		this.jar=jar;
 	}
@@ -22,10 +23,10 @@ public class JarContainer {
 	public ArrayList<String> getEntrieNames() 
 	{
 		ArrayList<String> list = new ArrayList<String>();
-		Enumeration<JarEntry> iter =  jar.entries();
-		while(iter.hasMoreElements())
+		Iterator<ZipEntry> iter = this.entries();
+		while(iter.hasNext())
 		{
-			JarEntry entry = iter.nextElement();
+			ZipEntry entry = iter.next();
 			
 			list.add(entry.getName());
 		}
@@ -50,8 +51,10 @@ public class JarContainer {
 
 
 
-	public Iterator<JarEntry> entries() {
-		return new IterEnumAdapter<JarEntry>(jar.entries());
+	@SuppressWarnings("unchecked")
+	public Iterator<ZipEntry> entries() {
+
+		return new IterEnumAdapter<ZipEntry>((Enumeration<ZipEntry>)jar.entries());
 	}
 	
 }

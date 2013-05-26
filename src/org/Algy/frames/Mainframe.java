@@ -7,8 +7,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.TreeSet;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
@@ -28,20 +30,18 @@ import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.tree.TreePath;
 
 import jsyntaxpane.DefaultSyntaxKit;
 import jsyntaxpane.SyntaxDocument;
 import jsyntaxpane.Token;
 import jsyntaxpane.TokenType;
 
+import org.Algy.Utils.IterEnumAdapter;
 import org.Algy.controllers.MainController;
 import org.Algy.dialogs.AboutDialog;
-import org.Algy.jar.JarClassFile;
 import org.Algy.models.CachedJarModel;
-import javax.swing.ImageIcon;
-import javax.swing.SwingConstants;
-import java.awt.Component;
-import javax.swing.Box;
 
 public class Mainframe extends JFrame {
 
@@ -114,6 +114,11 @@ public class Mainframe extends JFrame {
 		toolBar.add(btnOpen);
 		
 		JButton btnSave = new JButton("");
+		btnSave.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				fileProcess(false);
+			}
+		});
 		btnSave.setIcon(new ImageIcon(Mainframe.class.getResource("/com/sun/java/swing/plaf/windows/icons/FloppyDrive.gif")));
 		toolBar.add(btnSave);
 		
@@ -202,10 +207,13 @@ public class Mainframe extends JFrame {
 	}
 	private void fileProcess(boolean open)
 	{
-		File file = showFileDialog(true);
+		File file = showFileDialog(open);
 		if(file != null)
 			try {
-				controller.openFile(file);
+				if(open)
+					controller.openFile(file);
+				else
+					controller.saveFileAs(file, true);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -235,6 +243,7 @@ public class Mainframe extends JFrame {
 			 */
 			@Override
 			public void caretUpdate(CaretEvent event) {
+				/*
 				SyntaxDocument document = (SyntaxDocument) dtrpnVoidMain.getDocument();
 				
 				if(document != null)
@@ -243,9 +252,6 @@ public class Mainframe extends JFrame {
 					
 					if( tok != null)
 					{
-						/*
-						 * class telling
-						 */
 						Token leftest , rightest;
 						TokenPointer resleft = new TokenPointer(), resright = new TokenPointer();
 						String fullToken = getFullToken(tok, document, resleft, resright);
@@ -274,6 +280,7 @@ public class Mainframe extends JFrame {
 						}
 					}
 				}
+				*/
 			}
 		});
 		updateTreeModel();
@@ -468,12 +475,45 @@ public class Mainframe extends JFrame {
 			dlg = new JFileChooser();
 		else
 			dlg = new JFileChooser(openFileRecentPath);
+		
+		dlg.setFileFilter(new FileFilter() {
+			
+			@Override
+			public String getDescription() {
+				// TODO Auto-generated method stub
+				return "Jar File(*.jar)";
+			}
+			
+			@Override
+			public boolean accept(File f) {
+				// TODO Auto-generated method stub
+				return f.getName().endsWith(".jar") || f.isDirectory();
+			}
+		});
+		dlg.addChoosableFileFilter(new FileFilter() {
+			
+			@Override
+			public String getDescription() {
+				// TODO Auto-generated method stub
+				return "Android Dex File(*.dex)";
+			}
+			
+			@Override
+			public boolean accept(File f) {
+				// TODO Auto-generated method stub
+				return f.getName().endsWith(".dex") || f.isDirectory();
+			}
+		});			
+		
 		int status;
 		if(open)
 			status = dlg.showOpenDialog(this);
 		else
+		{
+			
 			status =dlg.showSaveDialog(this);
-		
+			
+		}
 		if(status != JFileChooser.APPROVE_OPTION) return null;
 
 		openFileRecentPath = dlg.getSelectedFile().getParent();
@@ -484,5 +524,39 @@ public class Mainframe extends JFrame {
 	public void selectPath(String path, int type)
 	{
 		//TODO : create it
+		MyTreeNode node =  (MyTreeNode) tree.getModel().getRoot();
+		
+		boolean foundItem = false;
+		ArrayList<MyTreeNode> list = new ArrayList<MyTreeNode>();
+		list.add(node);
+		while(!foundItem)
+		{
+			@SuppressWarnings("unchecked")
+			Iterator<MyTreeNode> iter = new IterEnumAdapter<MyTreeNode>(node.children());
+			
+			MyTreeNode profitChild = null;
+			while(iter.hasNext())
+			{
+				MyTreeNode child = iter.next();
+				if(path.equals(node.getClassName()) && type == node.getType())
+				{
+					//found
+					foundItem = true;
+					list.add(child);
+					break;
+				}
+				else if(path.startsWith(child.getClassName()))
+				{
+					profitChild = child;
+					list.add(child);
+					break;
+				}
+			}
+			if(profitChild == null)
+				//not found
+				break;
+			node = profitChild;
+		}
+		tree.setSelectionPath(new TreePath(list.toArray(new MyTreeNode[list.size()])));
 	}
 }

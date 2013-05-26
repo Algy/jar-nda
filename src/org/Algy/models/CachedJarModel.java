@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -14,7 +16,6 @@ import org.Algy.jar.JarSource;
 import org.Algy.jar.JavaDecompiler;
 import org.Algy.jar.MetaCommentFile;
 import org.Algy.jar.MyJarFile;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 
@@ -123,7 +124,13 @@ public class CachedJarModel {
 		
 		return forceCompile(classFile);
 	}
-	
+	public void clearSourceData()
+	{
+		classFiles.clear();
+		directories.clear();
+		compiledSource.clear();
+		
+	}
 	public void clearCompiledCache()
 	{
 		compiledSource.clear();
@@ -138,14 +145,24 @@ public class CachedJarModel {
 	//safely...
 	public void safeSave(File file)  throws IOException
 	{
+		if(jarFile == null)
+			throw new IOException("No File to save");
+		
 		String original = file.getPath();
 		File savingFile = new File(file.getPath() + ".saving");
+		File oldFile =jarFile.getFile();
 		
-		IOUtils.copy(new FileInputStream(jarFile.getFile()), new FileOutputStream(savingFile));
+		InputStream oldFileStream = new FileInputStream(oldFile);
+		OutputStream savingFileStream = new FileOutputStream(savingFile);
+		IOUtils.copy(oldFileStream, savingFileStream);
+		
 		
 		//and metadata input ...
 		//TODO : metadata input
 		//if metadata input suceed
+		
+		oldFileStream.close();
+		savingFileStream.close();
 		
 		if(file.exists())
 			file.delete();

@@ -3,7 +3,6 @@ package org.Algy.controllers;
 import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Stack;
 
@@ -16,8 +15,6 @@ import org.Algy.models.CachedJarModel;
 import org.Algy.models.JarRenamer;
 import org.Algy.models.NoSuchClassFile;
 import org.Algy.models.RemapFormater;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class MainController implements Runnable{
 	private CachedJarModel jarModel;
@@ -91,9 +88,19 @@ public class MainController implements Runnable{
 	public void deobfucate() throws IOException
 	{
 		int min = 2, max = 40;
-		File file = JarRenamer.DeObfuscate(jarModel.getJarFile().getFile(), min, max);
-		jarModel.setJar(file);
-		jarModel.analyzeJar();
+		File oldFile = jarModel.getJarFile().getFile();
+		try
+		{
+			File file = JarRenamer.DeObfuscate(oldFile, min, max);
+			jarModel.setJar(file);
+			jarModel.analyzeJar();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			jarModel.setJar(oldFile);
+			jarModel.analyzeJar();
+		}
 		
 		frame.clearMainEditorText();
 		frame.updateTreeModel();
@@ -131,12 +138,15 @@ public class MainController implements Runnable{
 		String cmd = formatter.formatCommand();
 		
 		File f = JarRenamer.remapWithConfig(jarModel.getJarFile().getFile(), cmd);
-		
+
+		jarModel.clearSourceData();
 		jarModel.setJar(f);
 		jarModel.analyzeJar();
-		
+
 		frame.clearMainEditorText();
 		frame.updateTreeModel();
+		if(selected != null)
+			frame.selectPath(replaceClassName(selected.getClassName(), formatter), selected.getType());
 	}
 	
 	public static String replaceClassName(String className, RemapFormater remapper)

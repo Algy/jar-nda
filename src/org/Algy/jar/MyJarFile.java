@@ -2,18 +2,18 @@ package org.Algy.jar;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.apache.commons.io.IOUtils;
 
 public class MyJarFile extends JarContainer {
 	File file;
 	public MyJarFile(File file) throws IOException {
-		super(new JarFile(file));
+		super(new ZipFile(file));
 		this.file = file;
 	
 	}
@@ -35,14 +35,17 @@ public class MyJarFile extends JarContainer {
 		*/
 		
 		jarObjectList = new ArrayList<>();
-		Iterator<JarEntry> jarEntries = entries();
+		Iterator<ZipEntry> jarEntries = entries();
 		while(jarEntries.hasNext())
 		{
-			JarEntry entry = jarEntries.next();
-
+			ZipEntry entry = jarEntries.next();
 			byte [] fileBuf;
+			
 			try {
-				fileBuf = IOUtils.toByteArray(jar.getInputStream(entry));
+				InputStream	entryInputStream = jar.getInputStream(entry);
+				fileBuf = IOUtils.toByteArray(entryInputStream);
+				entryInputStream.close();
+				
 			} catch (IOException e1) {
 				e1.printStackTrace();
 				continue;
@@ -82,7 +85,7 @@ public class MyJarFile extends JarContainer {
 			{
 			}
 		}
-
+/*
 		Manifest manifest;
 		try {
 			manifest = jar.getManifest();
@@ -93,6 +96,7 @@ public class MyJarFile extends JarContainer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		*/
 			
 	} 
 	
