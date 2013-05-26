@@ -1,5 +1,6 @@
 package org.Algy.jar;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,8 +11,11 @@ import java.util.jar.Manifest;
 import org.apache.commons.io.IOUtils;
 
 public class MyJarFile extends JarContainer {
-	public MyJarFile(JarFile jar) {
-		super(jar);
+	File file;
+	public MyJarFile(File file) throws IOException {
+		super(new JarFile(file));
+		this.file = file;
+	
 	}
 	
 	private ArrayList<JarObject> jarObjectList = null;		
@@ -105,6 +109,11 @@ public class MyJarFile extends JarContainer {
 		if(jarObjectList == null)
 			throw new RuntimeException("collect objects first");
 		return jarObjectList.iterator();
+	}
+
+
+	public File getFile() {
+		return file;
 	}
 	
 }

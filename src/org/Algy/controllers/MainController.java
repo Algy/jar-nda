@@ -3,15 +3,19 @@ package org.Algy.controllers;
 import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
-import java.util.jar.JarFile;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Stack;
 
+import org.Algy.dialogs.RenamerDialog;
 import org.Algy.frames.Mainframe;
 import org.Algy.frames.MyTreeNode;
 import org.Algy.jar.JarSource;
 import org.Algy.jar.JavaDecompiler;
-import org.Algy.jar.MyJarFile;
 import org.Algy.models.CachedJarModel;
+import org.Algy.models.JarRenamer;
 import org.Algy.models.NoSuchClassFile;
+import org.Algy.models.RemapFormater;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -28,12 +32,11 @@ public class MainController implements Runnable{
 	public void startView()
 	{	
 		try {
-			jarModel = new CachedJarModel(new MyJarFile(new JarFile("test/b.jar")), new JavaDecompiler(), false);
-			jarModel.analyzeJar();
-		} catch (IOException e1) {
-			e1.printStackTrace();
+			jarModel = new CachedJarModel(null, new JavaDecompiler(), false);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		
 		EventQueue.invokeLater(this);
 	}
 	@Override
@@ -46,25 +49,31 @@ public class MainController implements Runnable{
 		}
 	}
 	
-	
 	public boolean openFile(File file) throws IOException
 	{
-		jarModel.setJar(new MyJarFile(new JarFile(file)));
+		jarModel.setJar(file);
 		jarModel.analyzeJar();
 		
+		frame.clearMainEditorText();
 		frame.updateTreeModel();
 		return true;
 	}
 	
-	
 	public boolean saveFileAs(File file, boolean overwrite) throws IOException
 	{
-		throw new NotImplementedException();
+		if(file.exists() && !overwrite)
+			return false;
+		
+		jarModel.safeSave(file);
+		
+		return true;
 	}
 	
 	
+	MyTreeNode selected = null;
 	public void treeItemSelection(MyTreeNode node)
 	{
+		selected = node;
 		if(node.getType() == MyTreeNode.TREENODE_CLASS || node.getType() == MyTreeNode.TREENODE_INNERCLASS)
 		{
 			try {
@@ -77,8 +86,116 @@ public class MainController implements Runnable{
 			}
 		} 
 	}
-
 	
 	
+	public void deobfucate() throws IOException
+	{
+		int min = 2, max = 40;
+		File file = JarRenamer.DeObfuscate(jarModel.getJarFile().getFile(), min, max);
+		jarModel.setJar(file);
+		jarModel.analyzeJar();
+		
+		frame.clearMainEditorText();
+		frame.updateTreeModel();
+	}
+	public void singleRename() throws IOException
+	{
+		RenamerDialog dlg = new RenamerDialog();
+		dlg.setVisible(true);
+		
+		if(!dlg.isAccepted())
+			return;
+		RemapFormater formatter = new RemapFormater();
+		switch(dlg.getRenamingType())
+		{
+		case Class:
+			formatter.putClass(dlg.getFromText(), dlg.getToText());
+			break;
+		case Field:
+			formatter.putField(dlg.getFromText(), dlg.getAdditionalName(), dlg.getToText());
+			break;
+		case Method:
+			formatter.putMethod(dlg.getFromText(),dlg.getAdditionalName(), dlg.getToText());
+			break;
+		case Package:
+			formatter.putPackage(dlg.getFromText(), dlg.getToText());
+			
+			break;
+		}
+		rename(formatter);
+	}
+	public void rename(RemapFormater formatter) throws IOException
+	{
+		System.out.print("cmd:");
+		System.out.println(formatter.formatCommand());
+		String cmd = formatter.formatCommand();
+		
+		File f = JarRenamer.remapWithConfig(jarModel.getJarFile().getFile(), cmd);
+		
+		jarModel.setJar(f);
+		jarModel.analyzeJar();
+		
+		frame.clearMainEditorText();
+		frame.updateTreeModel();
+	}
+	
+	public static String replaceClassName(String className, RemapFormater remapper)
+	{
+		Stack<String> stack = new Stack<>();
+		
+		String str = new String(className);
+		int ed;
+		
+		int cnt = 0;
+		while(!str.equals(""))
+		{
+			ed = str.lastIndexOf("/");
+			String stub = str.substring(ed+1);
+			
+			if(cnt == 0)
+			{
+				//class
+				HashMap<String, String>classMap = remapper.getClassMap();
+				
+				if(classMap.containsKey(str))
+				{
+					//class remapped
+					stack.push(classMap.get(str));
+				}
+				else
+					stack.push(stub);
+					
+			}
+			else
+			{
+				//package
+				HashMap<String, String> packageMap = remapper.getPakageMap();
+				
+				if(packageMap.containsKey(str))
+				{
+					//package remapped
+					stack.push(packageMap.get(str));
+				}
+				else
+					stack.push(stub);
+				
+			}
+			if(ed == -1)
+				break;
+			str = str.substring(0, ed);
+			cnt++;
+		}
+		// reconstruct
+		String result = "";
+		if(!stack.isEmpty())
+			result += stack.pop();
+		
+		while(!stack.isEmpty())
+		{
+			result += "/";
+			result += stack.pop();
+		}
+		return result;
+	}
 	
 }

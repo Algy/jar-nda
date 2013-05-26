@@ -1,6 +1,8 @@
 package org.Algy.models;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,6 +14,8 @@ import org.Algy.jar.JarSource;
 import org.Algy.jar.JavaDecompiler;
 import org.Algy.jar.MetaCommentFile;
 import org.Algy.jar.MyJarFile;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 
 public class CachedJarModel {
@@ -23,22 +27,24 @@ public class CachedJarModel {
 	
 	// className : JarSource (package sparator is /)
 	private HashMap<String, JarSource> compiledSource; 
+	
 	//className( path - ".class") : comment file
 	private HashMap<String, MetaCommentFile> comments; 
 	
 	private boolean analyzed = false;
 	private boolean decompileSourceAtOnce;
 	private JavaDecompiler decompiler;
-	public CachedJarModel(MyJarFile jarFile, JavaDecompiler decompiler, boolean decompileSourceAtOnce)
+	public CachedJarModel(File jarFile, JavaDecompiler decompiler, boolean decompileSourceAtOnce) throws IOException
 	{
-		setJar(jarFile);
+		if(jarFile != null)
+			setJar(jarFile);
 		this.decompileSourceAtOnce = decompileSourceAtOnce;
 		this.decompiler = decompiler;
 	}
 	
-	public void setJar(MyJarFile jarFile)
+	public void setJar(File jarFile) throws IOException
 	{
-		this.jarFile = jarFile;
+		this.jarFile  = new MyJarFile(jarFile);
 		analyzed = false;
 	}
 	public void analyzeJar()
@@ -46,9 +52,8 @@ public class CachedJarModel {
 		classFiles = new HashMap<String, JarClassFile>();
 		compiledSource = new HashMap<String, JarSource>();
 		comments = new HashMap<String, MetaCommentFile>();
-		
-		
 		directories = jarFile.getDirectories();
+		
 		jarFile.collectObjects(new JavaDecompiler());
 		
 		
@@ -90,7 +95,7 @@ public class CachedJarModel {
 	public JarSource forceCompile(String className) throws NoSuchClassFile, IOException
 	{
 		if(!classFiles.containsKey(className))
-			throw new NoSuchClassFile();
+			throw new NoSuchClassFile(className);
 		return forceCompile(classFiles.get(className));
 		
 	}
@@ -124,13 +129,28 @@ public class CachedJarModel {
 		compiledSource.clear();
 	}
 	
-	public void save()
+	public void saveAs(File file) throws IOException
 	{
-		
+		IOUtils.copy(new FileInputStream(jarFile.getFile()), new FileOutputStream(file));
+		//and metadata input 
 	}
 	
-	public void saveAs(File file)
+	//safely...
+	public void safeSave(File file)  throws IOException
 	{
+		String original = file.getPath();
+		File savingFile = new File(file.getPath() + ".saving");
+		
+		IOUtils.copy(new FileInputStream(jarFile.getFile()), new FileOutputStream(savingFile));
+		
+		//and metadata input ...
+		//TODO : metadata input
+		//if metadata input suceed
+		
+		if(file.exists())
+			file.delete();
+		
+		savingFile.renameTo(new File(original));
 	}
 	
 	public boolean isAnalyzed() {
@@ -152,7 +172,8 @@ public class CachedJarModel {
 	public HashMap<String, MetaCommentFile> getComments() {
 		return comments;
 	}
-	
-	
-	
+
+	public MyJarFile getJarFile() {
+		return jarFile;
+	}
 }

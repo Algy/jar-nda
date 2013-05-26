@@ -24,6 +24,10 @@ public class JarSource extends JarObject {
 	public void lazyDecompile() throws IOException
 	{
 		rawSource = decompiler.decompile(classFile.getClassContent());
+		
+		/*
+		 * source parsing here
+		 */
 		isDecompiled = true;
 	}
 	

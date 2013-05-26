@@ -1,0 +1,27 @@
+The JVM uses a compact way of storing method signatures, of which constructors are considered a special case.
+
+For your example:
+
+() indicates a method taking no arguments
+V indicates that it returns nothing
+The other parts of the scheme are:
+
+B - byte
+C - char
+D - double
+F - float
+I - int
+J - long
+S - short
+V - void
+Z - boolean
+[ - array of the thing following the bracket
+L [class name] ; - instance of this class, with dots becoming slashes
+( [args] ) [return type] - method signature
+For example:
+
+public int foo(String bar, long[][] baz)
+would become
+
+(Ljava/lang/String;[[J)I
+See the spec at Sun^H^H^HOracle's web site

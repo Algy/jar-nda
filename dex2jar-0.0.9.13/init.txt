@@ -1,0 +1,3 @@
+m com/jgoodies/forms/debug/FormDebugPanel.setPaintInBackground(Z)=setANG
+m com/jgoodies/forms/factories/CC.rchw(IIII)=Yoshi
+m com/jgoodies/forms/factories/CC.rchw(IIIILjava/lang/String;)=BurandoSeason

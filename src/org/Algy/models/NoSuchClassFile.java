@@ -2,6 +2,10 @@ package org.Algy.models;
 
 public class NoSuchClassFile extends Exception {
 
+	public NoSuchClassFile(String className) {
+		super(className);
+	}
+
 	/**
 	 * 
 	 */
