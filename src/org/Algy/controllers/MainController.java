@@ -108,6 +108,7 @@ public class MainController implements Runnable{
 	public void singleRename() throws IOException
 	{
 		RenamerDialog dlg = new RenamerDialog();
+		dlg.setLocationRelativeTo(frame);
 		dlg.setVisible(true);
 		
 		if(!dlg.isAccepted())
