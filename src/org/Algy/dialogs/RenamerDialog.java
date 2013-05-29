@@ -26,6 +26,9 @@ import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.RowSpec;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.LayoutStyle.ComponentPlacement;
 
 public class RenamerDialog extends JDialog implements ActionListener {
 
@@ -34,9 +37,12 @@ public class RenamerDialog extends JDialog implements ActionListener {
 	 */
 	private static final long serialVersionUID = 2027863895274680955L;
 	private final JPanel contentPanel = new JPanel();
-	private JTextField txtFromtext;
-	private JTextField txtToText;
+	private JPrompt txtFromtext;
+	private JPrompt txtToText;
+	private JPrompt txtAdditionalname;
 	private JComboBox renamingTypeComboBox; 
+	
+	
 	public enum RenamingType
 	{
 		Package, Class, Method, Field
@@ -60,14 +66,14 @@ public class RenamerDialog extends JDialog implements ActionListener {
 	public RenamerDialog() {
 		setModalityType(ModalityType.APPLICATION_MODAL);
 		setTitle("Rename");
-		setBounds(100, 100, 343, 217);
+		setBounds(100, 100, 285, 196);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		contentPanel.setLayout(null);
 		{
 			JPanel panel = new JPanel();
-			panel.setBounds(5, 5, 328, 64);
+			panel.setBounds(5, 5, 328, 31);
 			panel.setAlignmentY(Component.BOTTOM_ALIGNMENT);
 			contentPanel.add(panel);
 			panel.setLayout(new FormLayout(new ColumnSpec[] {
@@ -92,21 +98,45 @@ public class RenamerDialog extends JDialog implements ActionListener {
 						
 						if(type == RenamingType.Method)
 						{
-							lblAdditionallabel.setText("method name(type)");
-							lblAdditionallabel.setVisible(true);
-							txtAdditionalname.setVisible(true);
+							txtAdditionalname.setEnabled(true);
 						}
 						else if( type == RenamingType.Field)
 						{
-							lblAdditionallabel.setText("field name");
-							lblAdditionallabel.setVisible(true);
-							txtAdditionalname.setVisible(true);
+							txtAdditionalname.setEnabled(true);
 						}
 						else
 						{
-							lblAdditionallabel.setVisible(false);
-							txtAdditionalname.setVisible(false);							
+							txtAdditionalname.setEnabled(false);							
 						}
+						
+						switch (type )
+						{
+						case Method:
+							txtAdditionalname.setPromptString("func(Ljava/lang/String/;IZJ)");
+							txtFromtext.setPromptString("your.package.classname");
+							txtToText.setPromptString("AlternativeMethodName");
+							break;
+						case Class:
+							txtAdditionalname.setPromptString("");
+							txtToText.setPromptString("AlternativeClassName");
+							txtFromtext.setPromptString("your.package.classname");
+							
+							break;
+						case Field:
+							txtAdditionalname.setPromptString("field");
+							txtToText.setPromptString("AlternativeClassName");
+							txtFromtext.setPromptString("your.package.classname");
+							break;
+						case Package:
+							txtAdditionalname.setPromptString("");
+							txtToText.setPromptString("AlternativePackageName");
+							txtFromtext.setPromptString("your.package.here");
+							break;
+						}
+						txtAdditionalname.updateUI();
+						txtAdditionalname.repaint();
+						txtFromtext.repaint();
+						txtToText.repaint();
 					}
 				});
 				{
@@ -116,37 +146,57 @@ public class RenamerDialog extends JDialog implements ActionListener {
 				renamingTypeComboBox.setModel(new DefaultComboBoxModel(RenamingType.values()));
 				panel.add(renamingTypeComboBox, "4, 2, left, top");
 			}
-			{
-				lblAdditionallabel = new JLabel("additionalLabel");
-				panel.add(lblAdditionallabel, "1, 4, 2, 1, right, center");
-			}
-			{
-				txtAdditionalname = new JTextField();
-				panel.add(txtAdditionalname, "4, 4, 3, 1, default, top");
-				txtAdditionalname.setColumns(12);
-			}
 		}
 		{
 			JPanel panel = new JPanel();
-			panel.setBounds(5, 79, 322, 55);
+			panel.setBounds(5, 34, 322, 115);
 			panel.setAlignmentX(Component.RIGHT_ALIGNMENT);
 			panel.setAlignmentY(Component.TOP_ALIGNMENT);
 			contentPanel.add(panel);
 			{
-				txtFromtext = new JTextField();
-				panel.add(txtFromtext);
+				txtFromtext = new JPrompt("");
 				txtFromtext.setColumns(20);
 			}
 			{
-				JLabel lblArrowicon = new JLabel("");
+				lblArrowicon = new JLabel("");
 				lblArrowicon.setIcon(new ImageIcon(RenamerDialog.class.getResource("/javax/swing/plaf/metal/icons/ocean/collapsed-rtl.gif")));
-				panel.add(lblArrowicon);
 			}
 			{
-				txtToText = new JTextField();
-				panel.add(txtToText);
+				txtAdditionalname = new JPrompt("");
+				txtAdditionalname.setColumns(12);
+			}
+			{
+				txtToText = new JPrompt("");
 				txtToText.setColumns(15);
 			}
+			GroupLayout gl_panel = new GroupLayout(panel);
+			gl_panel.setHorizontalGroup(
+				gl_panel.createParallelGroup(Alignment.TRAILING)
+					.addGroup(gl_panel.createSequentialGroup()
+						.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+						.addGroup(gl_panel.createParallelGroup(Alignment.TRAILING, false)
+							.addComponent(txtToText, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+							.addComponent(txtFromtext, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+							.addComponent(txtAdditionalname, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+						.addPreferredGap(ComponentPlacement.RELATED)
+						.addComponent(lblArrowicon)
+						.addGap(69))
+			);
+			gl_panel.setVerticalGroup(
+				gl_panel.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel.createSequentialGroup()
+						.addGap(5)
+						.addGroup(gl_panel.createParallelGroup(Alignment.LEADING)
+							.addComponent(lblArrowicon)
+							.addGroup(gl_panel.createSequentialGroup()
+								.addComponent(txtFromtext, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+								.addPreferredGap(ComponentPlacement.RELATED)
+								.addComponent(txtAdditionalname, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+								.addPreferredGap(ComponentPlacement.RELATED)
+								.addComponent(txtToText, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
+						.addContainerGap(35, Short.MAX_VALUE))
+			);
+			panel.setLayout(gl_panel);
 		}
 		{
 			JPanel buttonPane = new JPanel();
@@ -167,8 +217,8 @@ public class RenamerDialog extends JDialog implements ActionListener {
 			}
 		}
 		
-		lblAdditionallabel.setVisible(false);
-		txtAdditionalname.setVisible(false);
+		
+		renamingTypeComboBox.setSelectedIndex(0);
 
 	}
 	public void relayOK()
@@ -196,8 +246,7 @@ public class RenamerDialog extends JDialog implements ActionListener {
 	}
 	
 	public boolean isAccepted = false;
-	private JTextField txtAdditionalname;
-	private JLabel lblAdditionallabel;
+	private JLabel lblArrowicon;
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		String cmd = e.getActionCommand();
@@ -211,8 +260,6 @@ public class RenamerDialog extends JDialog implements ActionListener {
 			this.setVisible(false);
 			isAccepted = false;
 		}
-	
-	
 	}
 
 	public boolean isAccepted() {

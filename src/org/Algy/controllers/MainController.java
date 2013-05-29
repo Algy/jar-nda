@@ -149,7 +149,19 @@ public class MainController implements Runnable{
 		if(selected != null)
 			frame.selectPath(replaceClassName(selected.getClassName(), formatter), selected.getType());
 	}
-	
+	public void rename(String cmd) throws IOException
+	{
+		File f = JarRenamer.remapWithConfig(jarModel.getJarFile().getFile(), cmd);
+
+		jarModel.clearSourceData();
+		jarModel.setJar(f);
+		jarModel.analyzeJar();
+
+		frame.clearMainEditorText();
+		frame.updateTreeModel();
+	//	if(selected != null)
+	//		frame.selectPath(replaceClassName(selected.getClassName(), formatter), selected.getType());
+	}	
 	public static String replaceClassName(String className, RemapFormater remapper)
 	{
 		Stack<String> stack = new Stack<>();
@@ -207,6 +219,11 @@ public class MainController implements Runnable{
 			result += stack.pop();
 		}
 		return result;
+	}
+	
+	public boolean modelOpenned()
+	{
+		return (jarModel.getJarFile() != null) && (jarModel.getJarFile().getFile() != null);
 	}
 	
 }

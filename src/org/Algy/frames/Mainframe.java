@@ -18,6 +18,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -41,9 +42,15 @@ import jsyntaxpane.TokenType;
 import org.Algy.Utils.IterEnumAdapter;
 import org.Algy.controllers.MainController;
 import org.Algy.dialogs.AboutDialog;
+import org.Algy.dialogs.BatchRenameDialog;
+import org.Algy.dialogs.CommandRenameDialog;
+import org.Algy.dialogs.IDialogOK;
+import org.Algy.dialogs.RenamerDialog.RenamingType;
 import org.Algy.models.CachedJarModel;
 
-public class Mainframe extends JFrame {
+import sun.jdbc.odbc.JdbcOdbcBatchUpdateException;
+
+public class Mainframe extends JFrame implements ISyntaxContextProvider {
 
 	/**
 	 * 
@@ -140,6 +147,23 @@ public class Mainframe extends JFrame {
 		btnRename.setIcon(new ImageIcon(Mainframe.class.getResource("/com/sun/java/swing/plaf/windows/icons/Computer.gif")));
 		toolBar.add(btnRename);
 		
+		JButton btnRenamebatch = new JButton("RenameBatch");
+		btnRenamebatch.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) {
+				renameBatchButton();
+			}
+		});
+		btnRenamebatch.setIcon(new ImageIcon(Mainframe.class.getResource("/sun/print/resources/oneside.png")));
+		toolBar.add(btnRenamebatch);
+		
+		JButton btnRenamecmd = new JButton("RenameCmd");
+		btnRenamecmd.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				renameCmdButton();
+			}
+		});
+		toolBar.add(btnRenamecmd);
+		
 		JPanel footerPane = new JPanel();
 		getContentPane().add(footerPane, BorderLayout.SOUTH);
 		footerPane.setLayout(new BorderLayout(0, 0));
@@ -187,8 +211,54 @@ public class Mainframe extends JFrame {
 		tree.setCellRenderer(new MyTreeNodeRenderer());
 		initComponent();
 	}
+
+	BatchRenameDialog batchRenameDialog = new BatchRenameDialog();
+	private void renameBatchButton()
+	{
+		batchRenameDialog.setLocationRelativeTo(this);
+		batchRenameDialog.setVisible(true);
+		
+		
+	}
+	static String result;
+	private void renameCmdButton()
+	{
+		CommandRenameDialog cmdRenameDlg = new CommandRenameDialog(new IDialogOK() {
+			@Override
+			public void onOK() {
+				onOKInRenameCmdDlg(result);
+			}
+		});
+		result = cmdRenameDlg.getText();
+		cmdRenameDlg.setLocationRelativeTo(this);
+		cmdRenameDlg.setVisible(true);
+		cmdRenameDlg.setAlwaysOnTop(true);
+	}
+	private void onOKInRenameCmdDlg(String txt) 
+	{
+		if(txt == null) txt ="";
+		try {
+			controller.rename(txt);
+		} catch (Exception e) {
+			ShowErrorMessage(e.getMessage());
+		}
+	}
+	private void ShowErrorMessage(String msg)
+	{
+		JOptionPane.showMessageDialog(this, msg, "error", JOptionPane.ERROR_MESSAGE);
+	}
+	
+	private void modelNotOpenError()
+	{
+		JOptionPane.showMessageDialog(this, "open jar/dex first", "error", JOptionPane.ERROR_MESSAGE);
+	}
 	private void deObfucateButton()
 	{
+		if(!controller.modelOpenned())
+		{
+			modelNotOpenError();
+			return;
+		}
 		try {
 			controller.deobfucate();
 		} catch (IOException e) {
@@ -198,6 +268,11 @@ public class Mainframe extends JFrame {
 	}
 	private void renameButton()
 	{
+		if(!controller.modelOpenned())
+		{
+			modelNotOpenError();
+			return;
+		}
 		try {
 			controller.singleRename();
 		} catch (IOException e) {
@@ -214,8 +289,8 @@ public class Mainframe extends JFrame {
 					controller.openFile(file);
 				else
 					controller.saveFileAs(file, true);
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog(this, e.getMessage(), "error", JOptionPane.ERROR_MESSAGE);
 			}
 		
 	}
@@ -238,49 +313,9 @@ public class Mainframe extends JFrame {
 		});
 		dtrpnVoidMain.addCaretListener(new CaretListener() {
 			
-			/* (non-Javadoc)
-			 * @see javax.swing.event.CaretListener#caretUpdate(javax.swing.event.CaretEvent)
-			 */
 			@Override
 			public void caretUpdate(CaretEvent event) {
-				/*
-				SyntaxDocument document = (SyntaxDocument) dtrpnVoidMain.getDocument();
-				
-				if(document != null)
-				{
-					Token tok = document.getTokenAt(event.getDot());
-					
-					if( tok != null)
-					{
-						Token leftest , rightest;
-						TokenPointer resleft = new TokenPointer(), resright = new TokenPointer();
-						String fullToken = getFullToken(tok, document, resleft, resright);
-						leftest = resleft.tok;
-						rightest = resright.tok;
-						
-						
-						System.out.println(fullToken + ";" + leftest.getString(document) + ";"+ rightest.getString(document));
-						
-						Token prevToken = document.getPrevToken(leftest);
-						Token nextToken = document.getNextToken(rightest);
-						if(prevToken != null && nextToken != null)
-						{
-							String prevTokenName = prevToken.getString(document);
-							String nextTokenName = nextToken.getString(document); 
-							if(prevTokenName.equals("class") || prevTokenName.equals("interface") || prevTokenName.equals("extends") || prevTokenName.equals("implements"))
-							{
-								String tokName =  tok.getString(document);
-								System.out.println("class or interface:" + tokName);
-							}
-							
-							if(prevTokenName.equals("import") || prevTokenName.equals("package"))
-							{
-								System.out.println("pakage : " + fullToken);
-							}	
-						}
-					}
-				}
-				*/
+				onCaretChanged(event);
 			}
 		});
 		updateTreeModel();
@@ -298,6 +333,82 @@ public class Mainframe extends JFrame {
 			}
 		});
 	}
+	
+	private EditorContext myEditorContext = new EditorContext();
+	public void onCaretChanged(CaretEvent event)
+	{		
+		SyntaxDocument document = (SyntaxDocument) dtrpnVoidMain.getDocument();
+		
+		if(document != null)
+		{
+			Token tok = document.getTokenAt(event.getDot());
+			
+			if( tok != null)
+			{
+				Token leftest , rightest;
+				TokenPointer resleft = new TokenPointer(), resright = new TokenPointer();
+				String fullToken = getFullToken(tok, document, resleft, resright);
+				leftest = resleft.tok;
+				rightest = resright.tok;
+				
+				
+				Token prevToken = document.getPrevToken(leftest);
+				Token nextToken = document.getNextToken(rightest);
+				
+				if(tree.getSelectionPath().getLastPathComponent() != null)
+				{
+					MyTreeNode node = (MyTreeNode) tree.getSelectionPath().getLastPathComponent();
+					
+					myEditorContext.type = RenamingType.Package;
+					if(node.getType() == MyTreeNode.TREENODE_PACKAGE)
+						myEditorContext.literal = node.getClassName().replace('/', '.');
+					else if(node.getClassName().lastIndexOf("/") != -1 )
+						myEditorContext.literal = node.getClassName().substring(0, node.getClassName().lastIndexOf("/")).replace('/', '.');
+					else
+						myEditorContext.literal = "";
+				}
+				else
+					myEditorContext.literal = "";
+				
+				myEditorContext.typeSure =false;
+				if(prevToken != null && nextToken != null)
+				{
+					String prevTokenName = prevToken.getString(document);
+					String nextTokenName = nextToken.getString(document); 
+					if(prevTokenName.equals("class") || prevTokenName.equals("interface") || prevTokenName.equals("extends") || prevTokenName.equals("implements"))
+					{
+						myEditorContext.typeSure = true;
+						myEditorContext.type = RenamingType.Class;
+						if(fullToken.contains("."))
+							myEditorContext.literal = fullToken;
+						else
+							myEditorContext.literal += "." + fullToken;
+						
+						String tokName =  tok.getString(document);
+						System.out.println("class or interface:" + tokName);
+					}
+					
+					if(prevTokenName.equals("import") || prevTokenName.equals("package"))
+					{
+						myEditorContext.type = RenamingType.Package;
+						myEditorContext.typeSure = true;
+						myEditorContext.literal = fullToken;
+						
+						System.out.println("pakage : " + fullToken);
+					}
+					
+					if(nextTokenName.equals("("))
+					{
+						boolean commaState = false;
+					}
+				}
+				System.out.println(myEditorContext);
+			}
+		}
+		
+	}
+	
+	
 	private class TokenPointer {
 		public Token tok;
 	}
@@ -558,5 +669,16 @@ public class Mainframe extends JFrame {
 			node = profitChild;
 		}
 		tree.setSelectionPath(new TreePath(list.toArray(new MyTreeNode[list.size()])));
+	}
+	
+	public void onTreeValueChanged()
+	{
+		
+	}
+	
+	@Override
+	public EditorContext getContext() {
+		// TODO Auto-generated method stub
+		return myEditorContext;
 	}
 }

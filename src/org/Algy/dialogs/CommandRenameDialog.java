@@ -2,26 +2,32 @@ package org.Algy.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.JEditorPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.JScrollPane;
 
-public class BatchRenamerDialog extends JDialog {
+public class CommandRenameDialog extends JDialog implements ActionListener {
+	private IDialogOK okHandler = null;
+	public CommandRenameDialog(IDialogOK okHandler) {
+		super();
+		this.okHandler = okHandler;
+	}
 
 	private final JPanel contentPanel = new JPanel();
-	private JTable table;
-
+	private JEditorPane dtrpnEditor;
+	
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
 		try {
-			BatchRenamerDialog dialog = new BatchRenamerDialog();
+			CommandRenameDialog dialog = new CommandRenameDialog();
 			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			dialog.setVisible(true);
 		} catch (Exception e) {
@@ -32,32 +38,20 @@ public class BatchRenamerDialog extends JDialog {
 	/**
 	 * Create the dialog.
 	 */
-	public BatchRenamerDialog() {
+	public CommandRenameDialog() {
+		setTitle("rename command");
 		setBounds(100, 100, 450, 300);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		contentPanel.setLayout(new BorderLayout(0, 0));
 		{
-			table = new JTable();
-			table.setModel(new DefaultTableModel(
-				new Object[][] {
-				},
-				new String[] {
-					"Type", "Name", "New column"
-				}
-			) {
-				Class[] columnTypes = new Class[] {
-					Object.class, String.class, Object.class
-				};
-				public Class getColumnClass(int columnIndex) {
-					return columnTypes[columnIndex];
-				}
-			});
-			table.getColumnModel().getColumn(0).setPreferredWidth(88);
-			table.getColumnModel().getColumn(1).setPreferredWidth(304);
-			table.getColumnModel().getColumn(2).setPreferredWidth(155);
-			contentPanel.add(table, BorderLayout.CENTER);
+			JScrollPane scrollPane = new JScrollPane();
+			contentPanel.add(scrollPane, BorderLayout.CENTER);
+			{
+				dtrpnEditor = new JEditorPane();
+				scrollPane.setViewportView(dtrpnEditor);
+			}
 		}
 		{
 			JPanel buttonPane = new JPanel();
@@ -74,6 +68,27 @@ public class BatchRenamerDialog extends JDialog {
 				cancelButton.setActionCommand("Cancel");
 				buttonPane.add(cancelButton);
 			}
+		}
+		
+	}
+	public String getText()
+	{
+		return dtrpnEditor.getText();
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		String cmd = e.getActionCommand();
+		if("OK".equals(cmd))
+		{
+			this.setVisible(false);
+			
+			if(okHandler != null)
+				okHandler.onOK();
+		}
+		else if("Cancel".equals(cmd))
+		{
+			this.setVisible(false);
 		}
 	}
 
