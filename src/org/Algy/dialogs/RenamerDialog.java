@@ -5,30 +5,23 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
-import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.border.EmptyBorder;
 
-import sun.awt.SunHints.Key;
-
-import java.awt.Dialog.ModalityType;
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.ColumnSpec;
 import com.jgoodies.forms.factories.FormFactory;
+import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.RowSpec;
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.LayoutStyle.ComponentPlacement;
 
 public class RenamerDialog extends JDialog implements ActionListener {
 
@@ -64,7 +57,6 @@ public class RenamerDialog extends JDialog implements ActionListener {
 	 * Create the dialog.
 	 */
 	public RenamerDialog() {
-		setModalityType(ModalityType.APPLICATION_MODAL);
 		setTitle("Rename");
 		setBounds(100, 100, 285, 196);
 		getContentPane().setLayout(new BorderLayout());

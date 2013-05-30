@@ -12,10 +12,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
 
-public class CommandRenameDialog extends JDialog implements ActionListener {
+public class CommandRenameDialog extends JDialog {
 	private IDialogOK okHandler = null;
 	public CommandRenameDialog(IDialogOK okHandler) {
-		super();
+		this();
 		this.okHandler = okHandler;
 	}
 
@@ -39,6 +39,7 @@ public class CommandRenameDialog extends JDialog implements ActionListener {
 	 * Create the dialog.
 	 */
 	public CommandRenameDialog() {
+		super();
 		setTitle("rename command");
 		setBounds(100, 100, 450, 300);
 		getContentPane().setLayout(new BorderLayout());
@@ -60,6 +61,16 @@ public class CommandRenameDialog extends JDialog implements ActionListener {
 			{
 				JButton okButton = new JButton("OK");
 				okButton.setActionCommand("OK");
+				okButton.addActionListener(new ActionListener() {
+					
+					@Override
+					public void actionPerformed(ActionEvent arg0) {
+						
+						if(okHandler != null)
+							okHandler.onOK();
+						invisible();
+					}
+				});
 				buttonPane.add(okButton);
 				getRootPane().setDefaultButton(okButton);
 			}
@@ -67,6 +78,14 @@ public class CommandRenameDialog extends JDialog implements ActionListener {
 				JButton cancelButton = new JButton("Cancel");
 				cancelButton.setActionCommand("Cancel");
 				buttonPane.add(cancelButton);
+				
+				cancelButton.addActionListener(new ActionListener() {
+					
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						invisible();
+					}
+				});
 			}
 		}
 		
@@ -76,20 +95,9 @@ public class CommandRenameDialog extends JDialog implements ActionListener {
 		return dtrpnEditor.getText();
 	}
 	
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		String cmd = e.getActionCommand();
-		if("OK".equals(cmd))
-		{
-			this.setVisible(false);
-			
-			if(okHandler != null)
-				okHandler.onOK();
-		}
-		else if("Cancel".equals(cmd))
-		{
-			this.setVisible(false);
-		}
+	public void invisible()
+	{
+		this.setVisible(false);
 	}
 
 }

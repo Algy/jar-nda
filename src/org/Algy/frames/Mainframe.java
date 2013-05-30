@@ -218,26 +218,25 @@ public class Mainframe extends JFrame implements ISyntaxContextProvider {
 		batchRenameDialog.setLocationRelativeTo(this);
 		batchRenameDialog.setVisible(true);
 		
-		
 	}
-	static String result;
+	CommandRenameDialog cmdRenameDlg = new CommandRenameDialog(new IDialogOK() {
+		@Override
+		public void onOK() {
+			onOKInRenameCmdDlg();
+		}
+	});
 	private void renameCmdButton()
 	{
-		CommandRenameDialog cmdRenameDlg = new CommandRenameDialog(new IDialogOK() {
-			@Override
-			public void onOK() {
-				onOKInRenameCmdDlg(result);
-			}
-		});
-		result = cmdRenameDlg.getText();
 		cmdRenameDlg.setLocationRelativeTo(this);
 		cmdRenameDlg.setVisible(true);
 		cmdRenameDlg.setAlwaysOnTop(true);
 	}
-	private void onOKInRenameCmdDlg(String txt) 
+	private void onOKInRenameCmdDlg() 
 	{
+		String txt = cmdRenameDlg.getText();
 		if(txt == null) txt ="";
 		try {
+			
 			controller.rename(txt);
 		} catch (Exception e) {
 			ShowErrorMessage(e.getMessage());

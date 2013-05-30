@@ -20,6 +20,7 @@ public class MainController implements Runnable{
 	private CachedJarModel jarModel;
 	private Mainframe frame;
 	
+	private boolean renaming = false;
 	public static final void main(String args[])
 	{
 		MainController controller = new MainController();
@@ -48,6 +49,8 @@ public class MainController implements Runnable{
 	
 	public boolean openFile(File file) throws IOException
 	{
+		if(renaming)
+			return false;
 		jarModel.setJar(file);
 		jarModel.analyzeJar();
 		
@@ -58,6 +61,9 @@ public class MainController implements Runnable{
 	
 	public boolean saveFileAs(File file, boolean overwrite) throws IOException
 	{
+		if(renaming)
+			return false;
+		
 		if(file.exists() && !overwrite)
 			return false;
 		
@@ -87,6 +93,11 @@ public class MainController implements Runnable{
 	
 	public void deobfucate() throws IOException
 	{
+		if(renaming)
+			return;
+		
+		renaming= true;
+		
 		int min = 2, max = 40;
 		File oldFile = jarModel.getJarFile().getFile();
 		try
@@ -104,9 +115,16 @@ public class MainController implements Runnable{
 		
 		frame.clearMainEditorText();
 		frame.updateTreeModel();
+		
+
+		renaming= false;
 	}
 	public void singleRename() throws IOException
 	{
+		if(renaming)
+			return;
+		
+		
 		RenamerDialog dlg = new RenamerDialog();
 		dlg.setLocationRelativeTo(frame);
 		dlg.setVisible(true);
@@ -131,9 +149,16 @@ public class MainController implements Runnable{
 			break;
 		}
 		rename(formatter);
+		
+
 	}
 	public void rename(RemapFormater formatter) throws IOException
 	{
+		if(renaming)
+			return;
+		
+
+		renaming= true;
 		System.out.print("cmd:");
 		System.out.println(formatter.formatCommand());
 		String cmd = formatter.formatCommand();
@@ -148,9 +173,15 @@ public class MainController implements Runnable{
 		frame.updateTreeModel();
 		if(selected != null)
 			frame.selectPath(replaceClassName(selected.getClassName(), formatter), selected.getType());
+		
+
+		renaming= false;
 	}
 	public void rename(String cmd) throws IOException
 	{
+		if(renaming)
+			return;
+		renaming= true;
 		File f = JarRenamer.remapWithConfig(jarModel.getJarFile().getFile(), cmd);
 
 		jarModel.clearSourceData();
@@ -159,13 +190,13 @@ public class MainController implements Runnable{
 
 		frame.clearMainEditorText();
 		frame.updateTreeModel();
-	//	if(selected != null)
-	//		frame.selectPath(replaceClassName(selected.getClassName(), formatter), selected.getType());
+
+		renaming= false;
 	}	
 	public static String replaceClassName(String className, RemapFormater remapper)
 	{
 		Stack<String> stack = new Stack<>();
-		
+
 		String str = new String(className);
 		int ed;
 		
@@ -224,6 +255,10 @@ public class MainController implements Runnable{
 	public boolean modelOpenned()
 	{
 		return (jarModel.getJarFile() != null) && (jarModel.getJarFile().getFile() != null);
+	}
+
+	public boolean isRenaming() {
+		return renaming;
 	}
 	
 }
